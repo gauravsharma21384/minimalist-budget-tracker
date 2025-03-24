@@ -40,29 +40,23 @@
         button:hover {
             background: #ff9966;
         }
-        ul {
-            list-style: none;
-            padding: 0;
+        h2 {
+            margin-top: 20px;
         }
-        li {
+        table {
+            width: 100%;
+            margin-top: 20px;
             background: rgba(255, 255, 255, 0.2);
-            margin: 10px 0;
+            border-collapse: collapse;
+            border-radius: 5px;
+            overflow: hidden;
+        }
+        th, td {
             padding: 10px;
-            border-radius: 5px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            border-bottom: 1px solid #fff;
         }
-        .delete-btn {
-            background: #ff4444;
-            color: white;
-            border: none;
-            padding: 5px 10px;
-            cursor: pointer;
-            border-radius: 5px;
-        }
-        .delete-btn:hover {
-            background: #cc0000;
+        th {
+            background: rgba(255, 255, 255, 0.3);
         }
     </style>
 </head>
@@ -78,25 +72,36 @@
             <input type="number" id="expense-amount" placeholder="Amount">
             <button onclick="addExpense()">Add Expense</button>
         </section>
-        <section id="expense-list">
-            <h2>Expenses</h2>
-            <ul id="expenses"></ul>
+        <section id="total-expense">
+            <h2>Total Expense: ₹<span id="total">0</span></h2>
+        </section>
+        <section id="expense-table">
+            <h2>Expense List</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Amount (₹)</th>
+                    </tr>
+                </thead>
+                <tbody id="expense-list">
+                </tbody>
+            </table>
         </section>
     </main>
     <script>
         document.addEventListener("DOMContentLoaded", loadExpenses);
         
         function addExpense() {
-            let name = document.getElementById("expense-name").value;
-            let amount = document.getElementById("expense-amount").value;
-            if (name === "" || amount === "") {
+            let name = document.getElementById("expense-name").value.trim();
+            let amount = parseFloat(document.getElementById("expense-amount").value);
+            if (!name || isNaN(amount) || amount <= 0) {
                 alert("Please enter valid expense details.");
                 return;
             }
             
-            let expense = { name, amount };
             let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-            expenses.push(expense);
+            expenses.push({ name, amount });
             localStorage.setItem("expenses", JSON.stringify(expenses));
             
             document.getElementById("expense-name").value = "";
@@ -106,20 +111,17 @@
         
         function loadExpenses() {
             let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-            let expenseList = document.getElementById("expenses");
+            let total = expenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+            document.getElementById("total").textContent = total.toFixed(2);
+            
+            let expenseList = document.getElementById("expense-list");
             expenseList.innerHTML = "";
-            expenses.forEach((expense, index) => {
-                let li = document.createElement("li");
-                li.innerHTML = `${expense.name} - ₹${expense.amount} <button class='delete-btn' onclick='deleteExpense(${index})'>X</button>`;
-                expenseList.appendChild(li);
+            expenses.forEach(expense => {
+                let amount = isNaN(expense.amount) ? 0 : expense.amount;
+                let row = document.createElement("tr");
+                row.innerHTML = `<td>${expense.name}</td><td>₹${amount.toFixed(2)}</td>`;
+                expenseList.appendChild(row);
             });
-        }
-        
-        function deleteExpense(index) {
-            let expenses = JSON.parse(localStorage.getItem("expenses")) || [];
-            expenses.splice(index, 1);
-            localStorage.setItem("expenses", JSON.stringify(expenses));
-            loadExpenses();
         }
     </script>
 </body>
